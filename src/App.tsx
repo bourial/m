@@ -1,5 +1,9 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
 function App() {
-  return <div className='text-red-500'>test</div>;
+  return <QueryClientProvider client={queryClient}></QueryClientProvider>;
 }
 
 export default App;
