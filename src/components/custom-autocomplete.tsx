@@ -1,79 +1,86 @@
-import React, { useState } from 'react';
-import { useAutocomplete } from '@mui/base/useAutocomplete';
-import { ITeam } from '../interfaces/teams';
-import CancelIcon from '@mui/icons-material/Cancel';
+import React from 'react';
+import {
+  useAutocomplete,
+  UseAutocompleteProps,
+} from '@mui/base/useAutocomplete';
 
-interface CustomAutocompleteProps {
-  data: ITeam[];
-  onChange: (value: ITeam | null) => void;
-  className?: string;
+export interface AutocompleteOption {
+  label: string;
+  [key: string]: any;
 }
 
-const CustomAutocomplete = (props: CustomAutocompleteProps) => {
-  const [inputValue, setInputValue] = useState('');
+interface CustomAutocompleteProps<T extends AutocompleteOption> {
+  options: T[];
+  onChange: (value: T | T[] | null) => void;
+  className?: string;
+  label?: string;
+  multiple?: boolean;
+}
 
+const CustomAutocomplete = <T extends AutocompleteOption>({
+  options,
+  onChange,
+  className = '',
+  label = 'Select an option',
+  multiple = false,
+}: CustomAutocompleteProps<T>) => {
   const {
     getRootProps,
     getInputProps,
+    getTagProps,
     getListboxProps,
     getOptionProps,
     groupedOptions,
+    value,
+    focused,
   } = useAutocomplete({
-    id: 'combo-box-demo',
-    options: props.data,
-    getOptionLabel: (option: ITeam) => option.strTeam,
-    onChange: (_, value) => props.onChange(value),
-    inputValue,
-    onInputChange: (_, newInputValue) => setInputValue(newInputValue),
-  });
-
-  const clearInput = () => {
-    setInputValue('');
-    props.onChange(null);
-  };
-
-  const inputProps = getInputProps();
+    options,
+    onChange: (_, value) => {
+      if (Array.isArray(value)) {
+        onChange(value as T[]);
+      } else if (value !== null && typeof value === 'object') {
+        onChange(value as T);
+      } else {
+        onChange(null);
+      }
+    },
+    multiple,
+  } as UseAutocompleteProps<T, boolean, boolean, boolean>);
 
   return (
-    <div
-      {...getRootProps()}
-      className={`w-[500px] relative ${props.className}`}
-    >
-      <div className='relative'>
-        <input
-          {...inputProps}
-          value={inputValue}
-          onChange={e => {
-            if (inputProps.onChange) {
-              inputProps.onChange(e);
-            }
-            setInputValue(e.target.value);
-          }}
-          placeholder='Choose a Team'
-          className='w-full h-12 pl-5 pr-10 rounded-full border-none outline-none bg-gray-100 text-black text-base'
-        />
-        {inputValue && (
-          <button
-            onClick={clearInput}
-            type='button'
-            className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
-          >
-            <CancelIcon fontSize='small' />
-          </button>
-        )}
+    <div className={className}>
+      <div {...getRootProps()} className='h-full w-full relative'>
+        <div className='h-full w-full flex flex-wrap gap-1 px-4'>
+          {multiple &&
+            (value as T[]).map((option: T, index: number) => (
+              <Tag label={option.label} {...getTagProps({ index })} />
+            ))}
+          <input
+            {...getInputProps()}
+            className='h-full w-full flex-grow bg-transparent focus:outline-none z-20'
+          />
+        </div>
+        <label
+          className={`absolute left-4 text-gray-500 transition-all duration-150 ${
+            focused || value ? '-top-2 text-xs' : 'top-4'
+          }`}
+        >
+          {label}
+        </label>
       </div>
+
       {groupedOptions.length > 0 ? (
         <ul
           {...getListboxProps()}
-          className='w-full mt-2 p-4 absolute z-10 list-none bg-gray-100 overflow-auto max-h-64 rounded-3xl shadow-lg'
+          className='mt-2 bg-gray-100 rounded-3xl shadow-lg p-2 max-h-60 overflow-auto'
         >
-          {(groupedOptions as ITeam[]).map((option, index) => (
+          {(groupedOptions as T[]).map((option, index) => (
             <li
               {...getOptionProps({ option, index })}
-              key={option.strTeam}
-              className='py-1 px-2 cursor-pointer hover:bg-gray-200 rounded-lg transition-all duration-150'
+              key={option.label}
+              className='px-4 py-2 hover:bg-gray-200 cursor-pointer rounded-lg transition-all duration-150'
             >
-              {option.strTeam}
+              {option.label}
             </li>
           ))}
         </ul>
@@ -81,5 +88,29 @@ const CustomAutocomplete = (props: CustomAutocompleteProps) => {
     </div>
   );
 };
+
+interface TagProps extends React.HTMLAttributes<HTMLDivElement> {
+  label: string;
+  onDelete: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}
+
+function Tag(props: TagProps) {
+  const { label, onDelete, ...other } = props;
+  return (
+    <div
+      {...other}
+      className='bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-sm flex items-center'
+    >
+      {label}
+      <button
+        type='button'
+        onClick={onDelete}
+        className='ml-1 text-blue-600 hover:text-blue-800'
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 
 export default CustomAutocomplete;
