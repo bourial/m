@@ -23,7 +23,7 @@ const Teams = () => {
   return (
     <main className='min-h-screen p-5'>
       {isLoading ? (
-        <div className='mx-auto mt-6 animate-pulse bg-gray-200 h-14 w-[500px] rounded-full' />
+        <div className='mx-auto mt-6 animate-pulse bg-gray-200 h-12 w-[500px] rounded-full' />
       ) : (
         <CustomAutocomplete
           className='mx-auto mt-6'
